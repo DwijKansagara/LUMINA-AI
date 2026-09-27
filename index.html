@@ -1,340 +1,73 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
 <head>
-
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>LUMINA AI</title>
-
-  <!-- FONT -->
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
-  <!-- CSS -->
-
-  <link rel="stylesheet" href="style.css">
-
-  <!-- Tensorflow -->
-
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
-
-  <!-- Teachable Machine Image -->
-
-  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.4/dist/teachablemachine-image.min.js"></script>
-
-  <!-- Audio -->
-
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands@0.4.0"></script>
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="LUMINA is a browser experiment for camera gesture and voice-command models." />
+  <title>LUMINA | Camera and voice interaction prototype</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.4/dist/teachablemachine-image.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands@0.4.0/dist/speech-commands.min.js" defer></script>
+  <script src="script.js" defer></script>
 </head>
-
 <body>
-
-  <div id="support-warning" class="support-warning hidden"></div>
-
-  <!-- LOADER -->
-
-  <div id="loader">
-
-    <div class="loader-content">
-
-      <div class="loader-orb"></div>
-
-      <h1>LUMINA AI</h1>
-
-      <p>Initializing Neural Systems...</p>
-
-    </div>
-
-  </div>
-
-  <!-- BACKGROUND -->
-
-  <div class="grid-bg"></div>
-  <div class="particles"></div>
-  <div class="mouse-glow"></div>
-
-  <!-- NAV -->
-
-  <nav>
-
-    <h1>LUMINA AI</h1>
-
-    <div class="nav-links">
-
-      <button>Home</button>
-      <button>Features</button>
-      <button>Analytics</button>
-      <button>About</button>
-
-    </div>
-
-  </nav>
-
-  <!-- HERO -->
-
-  <section class="hero">
-
-    <div class="orb-container">
-
-      <div class="orb"></div>
-
-      <div class="ring ring1"></div>
-      <div class="ring ring2"></div>
-      <div class="ring ring3"></div>
-
-    </div>
-
-    <h2>AI SMART ASSISTANT</h2>
-
-    <p>
-      Futuristic AI Assistant powered by Voice Intelligence,
-      Camera Recognition and Smart Automation.
-    </p>
-
-    <div class="hero-buttons">
-
-      <button id="voiceAiBtn" class="primary" onclick="selectVoiceAI()">
-        🎤 Start Voice AI
-      </button>
-
-      <button id="cameraAiBtn" class="secondary" onclick="selectCameraAI()">
-        📷 Start Camera AI
-      </button>
-
-      <button class="capture-btn" onclick="captureSnapshot()">
-        📸 Capture Scan
-      </button>
-
-    </div> 
-
-  </section>
-
-  <!-- HUD -->
-
-  <section class="hud-section">
-
-    <div class="hud-card">
-
-      <h3>🕒 LIVE TIME</h3>
-
-      <p id="clock">00:00:00</p>
-
-    </div>
-
-    <div class="hud-card">
-
-      <h3>🌍 WEATHER</h3>
-
-      <p>Rajkot • 32°C</p>
-
-    </div>
-
-    <div class="hud-card">
-
-      <h3>⚡ AI STATUS</h3>
-
-      <p>ONLINE</p>
-
-    </div>
-
-  </section>
-
-  <!-- STATS -->
-
-  <section class="stats">
-
-    <div class="stat-card">
-
-      <h3>98.7%</h3>
-
-      <p>AI Accuracy</p>
-
-    </div>
-
-    <div class="stat-card">
-
-      <h3>60 FPS</h3>
-
-      <p>Vision Engine</p>
-
-    </div>
-
-    <div class="stat-card">
-
-      <h3>ACTIVE</h3>
-
-      <p>Voice Engine</p>
-
-    </div>
-
-    <div class="stat-card">
-
-      <h3>72%</h3>
-
-      <p>Neural Load</p>
-
-    </div>
-
-  </section>
-
-  <!-- FEATURES -->
-
-  <section class="cards">
-
-    <div class="card">
-
-      <h3>👀 Vision Intelligence</h3>
-
-      <p>
-        Real-time webcam analysis with scanner overlays,
-        prediction systems and neural tracking.
-      </p>
-
-    </div>
-
-    <div class="card">
-
-      <h3>🎤 Voice Recognition</h3>
-
-      <p>
-        Detects trained voice commands and automates
-        intelligent system responses instantly.
-      </p>
-
-    </div>
-
-    <div class="card">
-
-      <h3>⚡ Smart Automation</h3>
-
-      <p>
-        Neural-network powered automation and futuristic AI systems.
-      </p>
-
-    </div>
-
-  </section>
-
-  <!-- MONITOR -->
-
-  <section class="monitor">
-
-    <div class="monitor-info">
-
-      <h2>AI MONITORING</h2>
-
-      <p>
-        Real-time neural analysis and machine learning predictions.
-      </p>
-
-      <div class="status">
-
-        <span>Prediction</span>
-
-        <span id="predictionText">WAITING...</span>
-
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <div id="support-warning" class="support-warning hidden" role="alert"></div>
+
+  <header class="site-header">
+    <a class="brand" href="#main" aria-label="LUMINA home">LUMINA<span>*</span></a>
+    <nav aria-label="Primary navigation">
+      <a href="#experiment">Experiment</a>
+      <a href="#monitor">Monitor</a>
+      <a href="#privacy">Privacy</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="experiment">
+      <p class="eyebrow">Browser interaction prototype / 2026</p>
+      <h1>Control audio with a trained voice or camera model.</h1>
+      <p class="intro">LUMINA loads model files from this repository and processes microphone or camera input in your browser. Access begins only after you select a mode and approve the browser permission.</p>
+      <div class="actions">
+        <button id="voiceAiBtn" class="primary" type="button">Start voice mode</button>
+        <button id="cameraAiBtn" type="button">Start camera mode</button>
+        <button id="stopAiBtn" type="button">Stop active mode</button>
+        <button id="captureBtn" type="button">Save camera snapshot</button>
       </div>
+    </section>
 
-      <div class="status">
+    <section class="status-grid" aria-label="Live experiment status">
+      <article><span>Local time</span><strong id="clock">00:00:00</strong></article>
+      <article><span>Mode</span><strong id="modeText">NONE</strong></article>
+      <article><span>Prediction</span><strong id="predictionText">WAITING</strong></article>
+      <article><span>Confidence</span><strong id="confidenceText">0%</strong></article>
+    </section>
 
-        <span>AI Mode</span>
-
-        <span id="modeText">NONE</span>
-
+    <section class="monitor" id="monitor">
+      <div class="monitor-copy">
+        <p class="eyebrow">Live monitor</p>
+        <h2>Input stays on this device.</h2>
+        <p>The model output shown here is experimental. It can be incorrect and should not be used for safety, identity, health, or access-control decisions.</p>
+        <div class="terminal" aria-live="polite" aria-label="Experiment log">
+          <div class="terminal-title">LUMINA LOG</div>
+          <div id="terminalBody"><p>&gt; Ready. Select a mode to begin.</p></div>
+        </div>
       </div>
-
-      <div class="status">
-
-        <span>System</span>
-
-        <span>ONLINE</span>
-
+      <div class="camera-box" aria-label="Camera preview">
+        <div id="webcam-container"><p class="camera-empty">Camera preview appears here after permission is granted.</p></div>
+        <div class="scanner-line" aria-hidden="true"></div>
       </div>
+    </section>
 
-      <div class="status">
+    <section class="privacy" id="privacy">
+      <p class="eyebrow">Permissions and data</p>
+      <h2>Nothing is uploaded by this page.</h2>
+      <p>Camera frames, microphone samples, predictions, and snapshots are handled locally in the browser. The page downloads TensorFlow.js libraries from jsDelivr and model files from this repository. A snapshot is saved only when you request it.</p>
+    </section>
+  </main>
 
-        <span>Confidence</span>
-
-        <span id="confidenceText">0%</span>
-
-      </div>
-
-      <!-- VISUALIZER -->
-
-      <div class="visualizer">
-
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-
-      </div>
-
-    </div>
-
-    <!-- CAMERA -->
-
-    <div class="camera-box">
-
-      <div id="webcam-container"></div>
-
-      <div class="scanner-line"></div>
-
-      <div class="corner top-left"></div>
-      <div class="corner top-right"></div>
-      <div class="corner bottom-left"></div>
-      <div class="corner bottom-right"></div>
-
-      <div class="camera-overlay">
-        LUMINA AI ANALYZING...
-      </div>
-
-    </div>
-
-  </section>
-
-  <!-- TERMINAL -->
-
-  <section class="terminal-section">
-
-    <div class="terminal">
-
-      <div class="terminal-header">
-        LUMINA TERMINAL
-      </div>
-
-      <div class="terminal-body" id="terminalBody">
-
-        <p>> System initialized...</p>
-        <p>> Neural systems online...</p>
-        <p>> Awaiting commands...</p>
-
-      </div>
-
-    </div>
-
-  </section>
-
-  <!-- FOOTER -->
-
-  <footer>
-
-    Designed & Developed by
-    <span>Dwij Kansagara</span>
-
-  </footer>
-
-  <!-- JS -->
-
-  <script src="script.js"></script>
-
+  <footer><span>Dwij Kansagara</span><a href="https://github.com/DwijKansagara/LUMINA-AI">View source on GitHub</a></footer>
 </body>
-
 </html>

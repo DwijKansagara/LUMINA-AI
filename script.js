@@ -1,573 +1,256 @@
-// Compute a robust model base path that works on GitHub Pages (project pages)
-// and on user pages (username.github.io). For project pages the first
-// pathname segment is usually the repository name (e.g. /Video-Player/).
-const _pathParts = window.location.pathname.split('/').filter(Boolean);
-const _repoBase = _pathParts.length ? '/' + _pathParts[0] : '';
-const _siteOrigin = window.location.origin;
-const _basePath = _siteOrigin + _repoBase;
+const imageURL = new URL("models/image/", window.location.href).href;
+const audioURL = new URL("models/audio/", window.location.href).href;
 
-// Use absolute URLs so libraries that require http/https schemes accept them.
-const imageURL = new URL('models/image/', window.location.href).href;
-const audioURL = new URL('models/audio/', window.location.href).href;
-
-let imageModel;
-let imageLabels;
-let webcam;
-let videoElement;
-let cameraGestureState = {
-  lastLabel: "",
-  musicPlaying: false
+const elements = {
+  warning: document.getElementById("support-warning"),
+  clock: document.getElementById("clock"),
+  mode: document.getElementById("modeText"),
+  prediction: document.getElementById("predictionText"),
+  confidence: document.getElementById("confidenceText"),
+  terminal: document.getElementById("terminalBody"),
+  webcam: document.getElementById("webcam-container"),
+  cameraBox: document.querySelector(".camera-box"),
+  voiceButton: document.getElementById("voiceAiBtn"),
+  cameraButton: document.getElementById("cameraAiBtn"),
+  stopButton: document.getElementById("stopAiBtn"),
+  captureButton: document.getElementById("captureBtn")
 };
-
-function showSupportWarning(message){
-  const warning = document.getElementById("support-warning");
-  if(warning){
-    warning.innerText = message;
-    warning.classList.remove("hidden");
-  }
-}
-
-function hideSupportWarning(){
-  const warning = document.getElementById("support-warning");
-  if(warning){
-    warning.classList.add("hidden");
-  }
-}
-
-function checkBrowserSupport(){
-  const warnings = [];
-
-  if (!("speechSynthesis" in window)){
-    warnings.push("Speech synthesis is not supported.");
-  }
-
-  if (typeof window.AudioContext === "undefined" &&
-      typeof window.webkitAudioContext === "undefined"){
-    warnings.push("Web Audio API is not supported.");
-  }
-
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-    warnings.push("Camera and microphone access are not supported.");
-  }
-
-  if (warnings.length){
-    showSupportWarning("Warning: " + warnings.join(" "));
-  } else {
-    hideSupportWarning();
-  }
-}
-
-/* YOUR SONG */
 
 const music = new Audio("song.mp3");
-let audioUnlocked = false;
-
-music.preload = "auto";
 music.loop = true;
+music.preload = "metadata";
 
-async function unlockAudio(){
-  if (audioUnlocked) return;
+let voiceRecognizer = null;
+let imageModel = null;
+let videoElement = null;
+let mediaStream = null;
+let animationFrameId = null;
+let predictionCanvas = null;
+let lastCameraLabel = "";
+let cameraMusicPlaying = false;
+
+function addTerminalMessage(text) {
+  const item = document.createElement("p");
+  item.textContent = `> ${text}`;
+  elements.terminal.appendChild(item);
+  elements.terminal.scrollTop = elements.terminal.scrollHeight;
+}
+
+function showError(error) {
+  const message = error instanceof Error ? error.message : String(error);
+  elements.warning.textContent = message;
+  elements.warning.classList.remove("hidden");
+  addTerminalMessage(`Error: ${message}`);
+}
+
+function clearError() {
+  elements.warning.textContent = "";
+  elements.warning.classList.add("hidden");
+}
+
+function setStatus(mode, prediction = "WAITING", confidence = "0%") {
+  elements.mode.textContent = mode;
+  elements.prediction.textContent = prediction;
+  elements.confidence.textContent = confidence;
+}
+
+function speak(text) {
+  if (!("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+}
+
+function isPlayLabel(label) {
+  const value = label.toLowerCase();
+  return value.includes("play") || value.includes("music") || value.includes("thumbs up");
+}
+
+function isStopLabel(label) {
+  const value = label.toLowerCase();
+  return value.includes("stop") || value.includes("pause") || value.includes("thumbs down");
+}
+
+async function validateModelFile(url) {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Model file could not be loaded (${response.status}).`);
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.includes("json")) {
+    const text = await response.text();
+    try { JSON.parse(text); } catch { throw new Error("A model JSON file returned invalid content."); }
+  }
+}
+
+async function stopActiveMode({ announce = true } = {}) {
+  if (voiceRecognizer?.isListening?.()) {
+    await voiceRecognizer.stopListening();
+  }
+  voiceRecognizer = null;
+
+  if (animationFrameId !== null) cancelAnimationFrame(animationFrameId);
+  animationFrameId = null;
+
+  if (mediaStream) mediaStream.getTracks().forEach(track => track.stop());
+  mediaStream = null;
+  videoElement = null;
+  predictionCanvas = null;
+  lastCameraLabel = "";
+  cameraMusicPlaying = false;
+  music.pause();
+
+  elements.webcam.innerHTML = '<p class="camera-empty">Camera preview appears here after permission is granted.</p>';
+  elements.cameraBox.classList.remove("active");
+  setStatus("NONE");
+  if (announce) addTerminalMessage("Active mode stopped.");
+}
+
+async function startVoiceMode() {
+  clearError();
+  await stopActiveMode({ announce: false });
+  setStatus("VOICE", "LOADING");
+  elements.voiceButton.disabled = true;
 
   try {
-    music.muted = true;
-    await music.play();
-    music.pause();
-    music.currentTime = 0;
-    audioUnlocked = true;
-    addTerminalMessage("Audio unlocked successfully.");
-  } catch (error) {
-    console.warn("Audio unlock attempt failed:", error);
-    addTerminalMessage("Audio unlock blocked by browser. Tap the page to enable sound.");
-  } finally {
-    music.muted = false;
-  }
-}
+    if (!navigator.mediaDevices?.getUserMedia) throw new Error("Microphone access is unavailable in this browser.");
+    if (!window.speechCommands) throw new Error("The speech model library did not load.");
 
-function isPlayLabel(label){
-  const normalized = label.toLowerCase();
-  return normalized.includes("play") || normalized.includes("music") || normalized.includes("thumbs up");
-}
-
-function isStopLabel(label){
-  const normalized = label.toLowerCase();
-  return normalized.includes("stop") || normalized.includes("pause") || normalized.includes("thumbs down");
-}
-
-/* LOADER */
-
-window.onload = () => {
-
-  checkBrowserSupport();
-
-  document.body.addEventListener("click", async () => {
-    await unlockAudio();
-  }, { once: true });
-
-  setTimeout(() => {
-
-    document.getElementById(
-      "loader"
-    ).style.display = "none";
-
-  },2500);
-};
-
-/* CLOCK */
-
-setInterval(() => {
-
-  const now = new Date();
-
-  document.getElementById(
-    "clock"
-  ).innerText = now.toLocaleTimeString();
-
-},1000);
-
-/* MOUSE GLOW */
-
-const glow = document.querySelector(
-  ".mouse-glow"
-);
-
-window.addEventListener("mousemove",e => {
-
-  glow.style.left = e.clientX - 100 + "px";
-  glow.style.top = e.clientY - 100 + "px";
-
-});
-
-/* TERMINAL */
-
-function addTerminalMessage(text){
-
-  const terminal = document.getElementById(
-    "terminalBody"
-  );
-
-  const p = document.createElement("p");
-
-  p.innerText = "> " + text;
-
-  terminal.appendChild(p);
-
-  terminal.scrollTop = terminal.scrollHeight;
-}
-
-/* SPEAK */
-
-function speak(text){
-
-  const speech = new SpeechSynthesisUtterance(text);
-
-  speech.rate = 1;
-
-  window.speechSynthesis.speak(speech);
-}
-
-async function requestCameraStream(){
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    throw new Error("Camera access is not supported by this browser.");
-  }
-
-  try {
-    return await navigator.mediaDevices.getUserMedia({ video: true });
-  } catch (error) {
-    if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = devices.filter(device => device.kind === "videoinput");
-
-      if (videoDevices.length === 0) {
-        throw new Error(
-          "No camera device was found. Please connect a webcam or enable an internal camera and reload."
-        );
-      }
-
-      try {
-        return await navigator.mediaDevices.getUserMedia({
-          video: { deviceId: videoDevices[0].deviceId }
-        });
-      } catch (fallbackError) {
-        throw new Error(
-          "Unable to access the selected camera device. " + fallbackError.message
-        );
-      }
-    }
-
-    throw error;
-  }
-}
-
-/* VOICE AI */
-
-async function selectVoiceAI(){
-
-  document.getElementById(
-    "modeText"
-  ).innerText = "VOICE";
-
-  addTerminalMessage(
-    "Voice systems activated"
-  );
-
-  speak("Voice systems activated");
-
-  try{
-
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-      throw new Error("Microphone access is not available in this browser.");
-    }
-
-    // Preflight check: ensure audio model JSON is reachable and valid JSON
-    try {
-      const resp = await fetch(audioURL + "model.json");
-      const text = await resp.text();
-      if (!resp.ok) {
-        throw new Error("Audio model not found at " + audioURL + "model.json (status " + resp.status + ")");
-      }
-      try { JSON.parse(text); } catch (e) {
-        throw new Error("Audio model JSON is invalid or returned HTML. Check " + audioURL + "model.json");
-      }
-    } catch (preflightErr) {
-      throw preflightErr;
-    }
-
-    const recognizer = speechCommands.create(
+    await validateModelFile(`${audioURL}model.json`);
+    voiceRecognizer = window.speechCommands.create(
       "BROWSER_FFT",
       undefined,
-      audioURL + "model.json",
-      audioURL + "metadata.json"
+      `${audioURL}model.json`,
+      `${audioURL}metadata.json`
     );
+    await voiceRecognizer.ensureModelLoaded();
+    const labels = voiceRecognizer.wordLabels();
+    addTerminalMessage(`Voice model ready: ${labels.join(", ")}`);
 
-    if (typeof recognizer.setOverlapFactor === "function") {
-      recognizer.setOverlapFactor(0.5);
-    }
+    voiceRecognizer.listen(result => {
+      const scores = Array.from(result.scores);
+      const maxScore = Math.max(...scores);
+      const label = labels[scores.indexOf(maxScore)] || "Unknown";
+      setStatus("VOICE", label, `${Math.round(maxScore * 100)}%`);
 
-    await recognizer.ensureModelLoaded();
-
-    const labels = recognizer.wordLabels();
-
-    addTerminalMessage(
-      "Voice model loaded. Labels: " + labels.join(", ")
-    );
-
-    recognizer.listen(result => {
-
-      const scores = result.scores;
-
-      let maxScore = 0;
-      let maxIndex = 0;
-
-      for(let i=0;i<scores.length;i++){
-
-        if(scores[i] > maxScore){
-
-          maxScore = scores[i];
-          maxIndex = i;
-        }
-      }
-
-      const prediction = labels[maxIndex];
-
-      document.getElementById(
-        "predictionText"
-      ).innerText = prediction;
-
-      document.getElementById(
-        "confidenceText"
-      ).innerText =
-      Math.floor(maxScore * 100) + "%";
-
-      addTerminalMessage(
-        "Voice Prediction: " + prediction + " (" + Math.floor(maxScore * 100) + "%)"
-      );
-
-      /* PLAY */
-
-      if(prediction.toLowerCase() === "play"){
-
-        music.play();
-
-        addTerminalMessage(
-          "Playing song.mp3"
-        );
-
-        speak("Playing music");
-      }
-
-      /* STOP */
-
-      if(prediction.toLowerCase() === "stop"){
-
+      if (maxScore >= 0.75 && isPlayLabel(label)) {
+        void music.play().catch(() => showError(new Error("Audio playback was blocked. Select the page and try again.")));
+      } else if (maxScore >= 0.75 && isStopLabel(label)) {
         music.pause();
-
-        addTerminalMessage(
-          "Music stopped"
-        );
-
-        speak("Music stopped");
       }
+    }, { probabilityThreshold: 0.75, overlapFactor: 0.5 });
 
-    },{
-
-      probabilityThreshold:0.75
-
-    });
-
-    addTerminalMessage("Voice AI listening...");
-
-  }catch(error){
-
-    console.error("VOICE AI ERROR:", error);
-
-    alert(
-      "VOICE AI ERROR:\n" + error.message
-    );
-
-    addTerminalMessage(
-      "ERROR: " + error.message
-    );
+    setStatus("VOICE", "LISTENING");
+    addTerminalMessage("Voice mode started. Microphone samples stay in this browser tab.");
+    speak("Voice mode started");
+  } catch (error) {
+    await stopActiveMode({ announce: false });
+    showError(error);
+  } finally {
+    elements.voiceButton.disabled = false;
   }
 }
 
-/* CAMERA AI */
-
-async function selectCameraAI(){
-
-  document.getElementById(
-    "modeText"
-  ).innerText = "CAMERA";
-
-  addTerminalMessage(
-    "Vision systems activated"
-  );
-
-  speak("Vision systems activated");
-  await unlockAudio();
+async function startCameraMode() {
+  clearError();
+  await stopActiveMode({ announce: false });
+  setStatus("CAMERA", "LOADING");
+  elements.cameraButton.disabled = true;
 
   try {
+    if (!navigator.mediaDevices?.getUserMedia) throw new Error("Camera access is unavailable in this browser.");
+    if (!window.tmImage) throw new Error("The image model library did not load.");
 
-    /* Load image model using tmImage (from CDN) */
-    const tmImageLib = window.tmImage || window.teachablemachine?.image;
-
-    if (!tmImageLib) {
-      throw new Error(
-        "Teachable Machine image library not loaded. Check your script import."
-      );
-    }
-
-    // Preflight check: ensure image model JSON is reachable
-    try {
-      const resp = await fetch(imageURL + "model.json");
-      const text = await resp.text();
-      if (!resp.ok) {
-        throw new Error("Image model not found at " + imageURL + "model.json (status " + resp.status + ")");
-      }
-      try { JSON.parse(text); } catch (e) {
-        throw new Error("Image model JSON is invalid or returned HTML. Check " + imageURL + "model.json");
-      }
-    } catch (preflightErr) {
-      throw preflightErr;
-    }
-
-    const modelResult = await tmImageLib.load(
-      imageURL + "model.json",
-      imageURL + "metadata.json"
-    );
-
-    imageModel = modelResult;
-
-    /* Read labels from metadata */
-    const metaResp = await fetch(imageURL + "metadata.json");
-    const meta = await metaResp.json();
-    imageLabels = meta.labels || [];
-
-    addTerminalMessage(
-      "Image model loaded. Labels: " + (imageLabels.join(", ") || "unknown")
-    );
-
-    /* CREATE NATIVE VIDEO ELEMENT FOR CAMERA DISPLAY */
-    const webcamContainer =
-    document.getElementById(
-      "webcam-container"
-    );
-
-    webcamContainer.innerHTML = "";
+    await validateModelFile(`${imageURL}model.json`);
+    imageModel = await window.tmImage.load(`${imageURL}model.json`, `${imageURL}metadata.json`);
+    mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
 
     videoElement = document.createElement("video");
+    videoElement.autoplay = true;
+    videoElement.muted = true;
+    videoElement.playsInline = true;
+    videoElement.srcObject = mediaStream;
+    elements.webcam.replaceChildren(videoElement);
+    elements.cameraBox.classList.add("active");
+    await videoElement.play();
 
-    videoElement.setAttribute("autoplay","");
-    videoElement.setAttribute("playsinline","");
-    videoElement.style.width = "100%";
-    videoElement.style.height = "100%";
-    videoElement.style.objectFit = "cover";
-
-    webcamContainer.appendChild(videoElement);
-
-    /* GET CAMERA STREAM */
-    const stream = await requestCameraStream();
-
-    videoElement.srcObject = stream;
-
-    /* Create an offscreen canvas for predictions */
-    const predictCanvas = document.createElement("canvas");
-
-    predictCanvas.width = 224;
-    predictCanvas.height = 224;
-
-    webcam = {
-      canvas: predictCanvas,
-      video: videoElement
-    };
-
-    /* Start prediction loop */
-    window.requestAnimationFrame(loop);
-
-    await unlockAudio();
-    cameraGestureState.lastLabel = "";
-    cameraGestureState.musicPlaying = false;
-    addTerminalMessage("Camera AI running");
-
+    predictionCanvas = document.createElement("canvas");
+    predictionCanvas.width = 224;
+    predictionCanvas.height = 224;
+    setStatus("CAMERA", "ANALYSING");
+    addTerminalMessage("Camera mode started. Frames stay in this browser tab.");
+    speak("Camera mode started");
+    animationFrameId = requestAnimationFrame(cameraLoop);
   } catch (error) {
-
-    console.error("CAMERA AI ERROR:", error);
-
-    alert(
-      "CAMERA AI ERROR:\n" + error.message
-    );
-
-    addTerminalMessage(
-      "ERROR: " + error.message
-    );
+    await stopActiveMode({ announce: false });
+    showError(error);
+  } finally {
+    elements.cameraButton.disabled = false;
   }
 }
 
-async function loop(){
+async function cameraLoop() {
+  if (!videoElement || !predictionCanvas || !imageModel) return;
+  try {
+    if (videoElement.readyState >= 2) {
+      const context = predictionCanvas.getContext("2d");
+      context.drawImage(videoElement, 0, 0, 224, 224);
+      const predictions = await imageModel.predict(predictionCanvas);
+      const highest = predictions.reduce((best, item) => item.probability > best.probability ? item : best, predictions[0]);
+      if (highest) {
+        const label = highest.className || "Unknown";
+        setStatus("CAMERA", label, `${Math.round(highest.probability * 100)}%`);
+        if (label !== lastCameraLabel) {
+          addTerminalMessage(`Camera prediction: ${label}`);
+          lastCameraLabel = label;
+        }
 
-  /* Draw the current video frame to the prediction canvas */
-  if (videoElement && videoElement.readyState >= 2) {
-
-    const ctx = webcam.canvas.getContext("2d");
-
-    ctx.drawImage(
-      videoElement,
-      0, 0,
-      224, 224
-    );
-  }
-
-  await predict();
-
-  window.requestAnimationFrame(loop);
-}
-
-async function predict(){
-
-  if (!imageModel || !webcam || !imageLabels) return;
-
-  const predictions =
-  await imageModel.predict(webcam.canvas);
-
-  let highest = predictions[0];
-
-  for(let i=1;i<predictions.length;i++){
-
-    if(
-      predictions[i].probability >
-      highest.probability
-    ){
-
-      highest = predictions[i];
-    }
-  }
-
-  document.getElementById(
-    "predictionText"
-  ).innerText = highest.className;
-
-  document.getElementById(
-    "confidenceText"
-  ).innerText =
-  Math.floor(
-    highest.probability * 100
-  ) + "%";
-
-  const currentLabel = highest.className || "";
-  document.getElementById(
-    "predictionText"
-  ).innerText = currentLabel;
-
-  if (currentLabel !== cameraGestureState.lastLabel) {
-    addTerminalMessage(
-      "Camera Prediction: " + currentLabel + " (" + Math.floor(highest.probability * 100) + "%)"
-    );
-    cameraGestureState.lastLabel = currentLabel;
-  }
-
-  if (highest.probability >= 0.75) {
-    if (isPlayLabel(currentLabel)) {
-      if (!cameraGestureState.musicPlaying) {
-        try {
+        if (highest.probability >= 0.75 && isPlayLabel(label) && !cameraMusicPlaying) {
           await music.play();
-          cameraGestureState.musicPlaying = true;
-          addTerminalMessage("Detected play signal: playing music");
-          speak("Playing music");
-        } catch (error) {
-          console.warn("Music playback failed:", error);
-          addTerminalMessage("Music playback blocked by browser autoplay policy.");
+          cameraMusicPlaying = true;
+        } else if (highest.probability >= 0.75 && isStopLabel(label) && cameraMusicPlaying) {
+          music.pause();
+          cameraMusicPlaying = false;
         }
       }
-    } else if (isStopLabel(currentLabel)) {
-      if (cameraGestureState.musicPlaying) {
-        music.pause();
-        cameraGestureState.musicPlaying = false;
-        addTerminalMessage("Detected stop signal: music paused");
-        speak("Stopping music");
-      }
     }
+  } catch (error) {
+    showError(error);
   }
+  animationFrameId = requestAnimationFrame(cameraLoop);
 }
 
-/* SNAPSHOT */
-
-function captureSnapshot(){
-
-  if(!videoElement){
-
-    alert(
-      "Start Camera AI first!"
-    );
-
+function saveSnapshot() {
+  if (!videoElement || videoElement.readyState < 2) {
+    showError(new Error("Start camera mode before saving a snapshot."));
     return;
   }
-
-  const snapshotCanvas = webcam && webcam.canvas ? webcam.canvas : document.createElement("canvas");
-  const width = videoElement.videoWidth || 640;
-  const height = videoElement.videoHeight || 480;
-
-  if (!webcam || !webcam.canvas) {
-    snapshotCanvas.width = width;
-    snapshotCanvas.height = height;
-    const ctx = snapshotCanvas.getContext("2d");
-    ctx.drawImage(videoElement, 0, 0, width, height);
-  }
-
-  const link =
-  document.createElement("a");
-
-  link.download =
-  "lumina_scan.png";
-
-  link.href =
-  snapshotCanvas.toDataURL();
-
+  const canvas = document.createElement("canvas");
+  canvas.width = videoElement.videoWidth;
+  canvas.height = videoElement.videoHeight;
+  canvas.getContext("2d").drawImage(videoElement, 0, 0);
+  const link = document.createElement("a");
+  link.download = "lumina-snapshot.png";
+  link.href = canvas.toDataURL("image/png");
   link.click();
-
-  addTerminalMessage(
-    "Snapshot captured"
-  );
-
-  speak(
-    "Snapshot captured"
-  );
+  addTerminalMessage("Snapshot saved to this device.");
 }
+
+function checkBrowserSupport() {
+  const missing = [];
+  if (!("speechSynthesis" in window)) missing.push("speech output");
+  if (!navigator.mediaDevices?.getUserMedia) missing.push("camera and microphone access");
+  if (missing.length) showError(new Error(`This browser does not support ${missing.join(" or ")}.`));
+}
+
+setInterval(() => {
+  elements.clock.textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}, 1000);
+elements.clock.textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+
+elements.voiceButton.addEventListener("click", () => void startVoiceMode());
+elements.cameraButton.addEventListener("click", () => void startCameraMode());
+elements.stopButton.addEventListener("click", () => void stopActiveMode());
+elements.captureButton.addEventListener("click", saveSnapshot);
+window.addEventListener("beforeunload", () => {
+  if (mediaStream) mediaStream.getTracks().forEach(track => track.stop());
+});
+
+checkBrowserSupport();
