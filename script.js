@@ -16,9 +16,35 @@ const elements = {
   captureButton: document.getElementById("captureBtn")
 };
 
-const music = new Audio("song.mp3");
-music.loop = true;
-music.preload = "metadata";
+const music = {
+  context: null,
+  gain: null,
+  oscillators: [],
+  async play() {
+    if (this.oscillators.length) return;
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) throw new Error("Web Audio is unavailable in this browser.");
+    this.context = this.context || new AudioContext();
+    await this.context.resume();
+    this.gain = this.context.createGain();
+    this.gain.gain.value = 0.035;
+    this.gain.connect(this.context.destination);
+    this.oscillators = [110, 164.81].map(frequency => {
+      const oscillator = this.context.createOscillator();
+      oscillator.type = "sine";
+      oscillator.frequency.value = frequency;
+      oscillator.connect(this.gain);
+      oscillator.start();
+      return oscillator;
+    });
+  },
+  pause() {
+    this.oscillators.forEach(oscillator => oscillator.stop());
+    this.oscillators = [];
+    if (this.gain) this.gain.disconnect();
+    this.gain = null;
+  }
+};
 
 let voiceRecognizer = null;
 let imageModel = null;

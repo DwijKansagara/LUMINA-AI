@@ -7,7 +7,7 @@ LUMINA is a static browser experiment that connects locally hosted Teachable Mac
 - Loads the image and speech model files stored in `models/`.
 - Requests camera or microphone access only after the visitor selects a mode.
 - Displays the current model label and confidence value.
-- Maps trained play and stop labels to the bundled audio track.
+- Maps trained play and stop labels to a quiet tone generated with the browser Web Audio API.
 - Saves a camera snapshot only after an explicit button press.
 
 The model output is experimental. It should not be used for identity, safety, health, security, or access-control decisions.
@@ -30,12 +30,11 @@ models/image/    Teachable Machine image model and metadata
 index.html       Accessible page structure
 style.css        Responsive visual system
 script.js        Permission, inference, media and snapshot logic
-song.mp3         Audio used by the trained play and stop interaction
 ```
 
 ## Privacy and network use
 
-Camera frames, microphone samples, predictions, and snapshots stay in the browser. The page downloads pinned TensorFlow.js, Teachable Machine, and Speech Commands libraries from jsDelivr. Model files and the audio track load from the same site that serves the project.
+Camera frames, microphone samples, predictions, and snapshots stay in the browser. The page downloads pinned TensorFlow.js, Teachable Machine, and Speech Commands libraries from jsDelivr. Model files load from the same site that serves the project. The interaction tone is generated locally and requires no audio asset.
 
 ## Limitations
 
