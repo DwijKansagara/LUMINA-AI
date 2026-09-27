@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="docs/lumina-banner.svg" alt="LUMINA browser camera and voice interaction prototype" width="100%" />
+</div>
+
 # LUMINA
 
 LUMINA is a static browser experiment that connects locally hosted Teachable Machine models to camera gestures, voice commands, and audio playback.
