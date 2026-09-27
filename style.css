@@ -60,7 +60,12 @@ h2 { margin: 0; max-width: 620px; font-size: clamp(42px, 6vw, 72px); line-height
 
 .privacy { margin-bottom: 120px; padding: clamp(38px, 6vw, 70px); border: 1px solid var(--line); background: var(--surface-2); }
 footer { display: flex; justify-content: space-between; gap: 24px; padding: 34px 0 50px; border-top: 1px solid var(--line); color: var(--muted); font: 700 12px/1.5 monospace; text-transform: uppercase; }
+footer nav { display: flex; flex-wrap: wrap; gap: 18px; }
 footer a { color: var(--accent); }
+.legal { max-width: 760px; min-height: calc(100vh - 140px); padding: 70px 0; }
+.legal h1 { max-width: none; font-size: clamp(46px, 8vw, 82px); }
+.legal h2 { margin-top: 42px; font-size: 25px; }
+.legal .back { display: inline-block; margin-bottom: 52px; color: var(--accent); font: 700 12px monospace; text-transform: uppercase; }
 
 @media (prefers-reduced-motion: no-preference) {
   .reveal-ready .reveal-item {

@@ -2,6 +2,8 @@
 
 LUMINA is a static browser experiment that connects locally hosted Teachable Machine models to camera gestures, voice commands, and audio playback.
 
+**[Open LUMINA on the web](https://lumina.antideploy.com)**
+
 ## What it does
 
 - Loads the image and speech model files stored in `models/`.
