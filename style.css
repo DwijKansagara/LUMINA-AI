@@ -62,6 +62,23 @@ h2 { margin: 0; max-width: 620px; font-size: clamp(42px, 6vw, 72px); line-height
 footer { display: flex; justify-content: space-between; gap: 24px; padding: 34px 0 50px; border-top: 1px solid var(--line); color: var(--muted); font: 700 12px/1.5 monospace; text-transform: uppercase; }
 footer a { color: var(--accent); }
 
+@media (prefers-reduced-motion: no-preference) {
+  .reveal-ready .reveal-item {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity .55s cubic-bezier(.22, 1, .36, 1), transform .55s cubic-bezier(.22, 1, .36, 1);
+  }
+  .reveal-ready .reveal-item.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .status-grid .reveal-item:nth-child(2) { transition-delay: 60ms; }
+  .status-grid .reveal-item:nth-child(3) { transition-delay: 120ms; }
+  .status-grid .reveal-item:nth-child(4) { transition-delay: 180ms; }
+  button { transition: transform .2s ease, border-color .2s ease, background .2s ease; }
+  button:hover { transform: translateY(-2px); }
+}
+
 @media (max-width: 760px) {
   .site-header { align-items: flex-start; padding: 24px 0; }
   nav { display: none; }
