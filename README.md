@@ -42,6 +42,8 @@ script.js        Permission, inference, media and snapshot logic
 
 Camera frames, microphone samples, predictions, and snapshots stay in the browser. The page downloads pinned TensorFlow.js, Teachable Machine, and Speech Commands libraries from jsDelivr. Model files load from the same site that serves the project. The interaction tone is generated locally and requires no audio asset.
 
+The site also includes a persistent anonymous visit counter and 20-step appreciation meter. The counter uses no advertising cookie or browser identifier. Privacy, terms, cookie, and refund pages document the site's current behavior.
+
 ## Limitations
 
 - Recognition quality depends on the supplied training data, device, lighting, microphone and background noise.
