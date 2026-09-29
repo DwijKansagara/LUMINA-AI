@@ -4,6 +4,8 @@
 
 # LUMINA
 
+<img src="https://dwij-counts.antideploy.com/badge/lumina.svg" alt="LUMINA views and likes" width="214" />
+
 LUMINA is a static browser experiment that connects locally hosted Teachable Machine models to camera gestures, voice commands, and audio playback.
 
 **[Open LUMINA on the web](https://lumina.antideploy.com)**
