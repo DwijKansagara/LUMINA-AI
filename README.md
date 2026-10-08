@@ -10,6 +10,8 @@ LUMINA is a static browser experiment that connects locally hosted Teachable Mac
 
 **[Open LUMINA on the web](https://lumina.antideploy.com)**
 
+![LUMINA live preview](docs/social-preview.png)
+
 **[Try the experiment](https://lumina.antideploy.com)** · **[Read the privacy notes](https://lumina.antideploy.com/privacy.html)** · **[Report a reproducible problem](https://github.com/DwijKansagara/LUMINA-AI/issues/new/choose)**
 
 [![Security checks](https://github.com/DwijKansagara/LUMINA-AI/actions/workflows/security.yml/badge.svg)](https://github.com/DwijKansagara/LUMINA-AI/actions/workflows/security.yml)
