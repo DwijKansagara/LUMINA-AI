@@ -3,16 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="index, follow, max-image-preview:large">
   <meta name="description" content="LUMINA is a browser experiment for camera gesture and voice-command models." />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://dwij-signal.vercel.app; script-src 'self' 'unsafe-eval' https://cdn.jsdelivr.net https://dwij-signal.vercel.app; style-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; worker-src 'self' blob:; font-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'" />
-  <title>LUMINA | Camera and voice interaction prototype</title>
+  <meta name="author" content="Dwij Kansagara">
+<link rel="canonical" href="https://lumina.antideploy.com/">
+<title>LUMINA | Camera and voice interaction prototype</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js" integrity="sha384-vE8hbVJ4lezako5rlvE7bY0BVzWlFhZncPlckrqNwcUQpVtgbENTgZ8TBbnPjZre" crossorigin="anonymous" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.4/dist/teachablemachine-image.min.js" integrity="sha384-kRSkpNZJhR+RG8g92VsoImxaXc6r8pfCqvp59dzQ0Q1l1VqQNL8Os5wOZR5Actkg" crossorigin="anonymous" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands@0.4.0/dist/speech-commands.min.js" integrity="sha384-Jp/s8pUqQeLKRidZfPMGpDwBh5xo2KyWRuzhc4FZnJ5m/gaFGthnU7uw2HwXWXhK" crossorigin="anonymous" defer></script>
   <script src="script.js" defer></script>
   <script src="https://dwij-signal.vercel.app/engagement-widget.js?v=20261008-1" defer></script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Does LUMINA upload camera or microphone input?","acceptedAnswer":{"@type":"Answer","text":"No. Camera frames, microphone samples and model predictions are processed in the browser by this application."}},{"@type":"Question","name":"When does LUMINA request permission?","acceptedAnswer":{"@type":"Answer","text":"LUMINA requests camera or microphone permission only after you select the matching mode."}},{"@type":"Question","name":"Are LUMINA predictions suitable for safety decisions?","acceptedAnswer":{"@type":"Answer","text":"No. LUMINA is an experimental learning prototype and its predictions can be incorrect."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://lumina.antideploy.com/"}]}</script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to main content</a>
@@ -68,11 +70,12 @@
       <h2>Nothing is uploaded by this page.</h2>
       <p>Camera frames, microphone samples, predictions, and snapshots are handled locally in the browser. The page downloads TensorFlow.js libraries from jsDelivr and model files from this repository. A snapshot is saved only when you request it.</p>
     </section>
+    <section class="privacy" id="faq" aria-labelledby="faq-title"><p class="eyebrow">Common questions</p><h2 id="faq-title">How LUMINA handles input.</h2><h3>Does LUMINA upload camera or microphone input?</h3><p>No. Camera frames, microphone samples and model predictions are processed in this browser by the application.</p><h3>When are permissions requested?</h3><p>Only after you select camera or voice mode.</p><h3>Can predictions be used for safety decisions?</h3><p>No. LUMINA is an experimental learning prototype and its predictions can be incorrect.</p></section>
   </main>
 
   <dwij-engagement site="lumina"></dwij-engagement>
 
-  <footer><span>Dwij Kansagara</span><nav aria-label="Project links"><a href="https://github.com/DwijKansagara/LUMINA-AI">View source</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="cookies.html">Cookies</a><a href="refunds.html">Refunds</a></nav></footer>
+  <footer><span>Built by <a href="https://about-me.antideploy.com/">Dwij Kansagara</a>, a Class 10 student developer in Rajkot.</span><nav aria-label="Project links"><a href="https://github.com/DwijKansagara/LUMINA-AI">View source</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="cookies.html">Cookies</a><a href="refunds.html">Refunds</a></nav></footer>
 </body>
 </html>
 

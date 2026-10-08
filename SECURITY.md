@@ -1,6 +1,6 @@
 # Security
 
-Report suspected vulnerabilities privately to **kansagara.dwij@gmail.com**.
+Report suspected vulnerabilities privately to **work.dwijkansagara@gmail.com**.
 
 LUMINA is a static, login-free browser experiment. Camera and microphone access begins only after a clear user action and browser permission. Media processing remains in the browser; the site has no passwords, JWTs, uploads to a server, database client, payments, webhooks, or arbitrary server-side URL fetching. Model paths are fixed by the application. UI output uses text-safe DOM updates.
 

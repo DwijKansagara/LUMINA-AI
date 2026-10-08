@@ -1,5 +1,32 @@
 const imageURL = new URL("models/image/", window.location.href).href;
 const audioURL = new URL("models/audio/", window.location.href).href;
+const libraries = {
+  tf: ["https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js", "sha384-vE8hbVJ4lezako5rlvE7bY0BVzWlFhZncPlckrqNwcUQpVtgbENTgZ8TBbnPjZre"],
+  image: ["https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.4/dist/teachablemachine-image.min.js", "sha384-kRSkpNZJhR+RG8g92VsoImxaXc6r8pfCqvp59dzQ0Q1l1VqQNL8Os5wOZR5Actkg"],
+  speech: ["https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands@0.4.0/dist/speech-commands.min.js", "sha384-Jp/s8pUqQeLKRidZfPMGpDwBh5xo2KyWRuzhc4FZnJ5m/gaFGthnU7uw2HwXWXhK"],
+};
+const loadedLibraries = new Map();
+
+function loadLibrary(name) {
+  if (loadedLibraries.has(name)) return loadedLibraries.get(name);
+  const [src, integrity] = libraries[name];
+  const promise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = src;
+    script.integrity = integrity;
+    script.crossOrigin = "anonymous";
+    script.onload = resolve;
+    script.onerror = () => reject(new Error("A required machine-learning library could not be loaded."));
+    document.head.appendChild(script);
+  });
+  loadedLibraries.set(name, promise);
+  return promise;
+}
+
+async function ensureLibraries(mode) {
+  await loadLibrary("tf");
+  await loadLibrary(mode === "voice" ? "speech" : "image");
+}
 
 const elements = {
   warning: document.getElementById("support-warning"),
@@ -137,6 +164,7 @@ async function startVoiceMode() {
 
   try {
     if (!navigator.mediaDevices?.getUserMedia) throw new Error("Microphone access is unavailable in this browser.");
+    await ensureLibraries("voice");
     if (!window.speechCommands) throw new Error("The speech model library did not load.");
 
     await validateModelFile(`${audioURL}model.json`);
@@ -182,6 +210,7 @@ async function startCameraMode() {
 
   try {
     if (!navigator.mediaDevices?.getUserMedia) throw new Error("Camera access is unavailable in this browser.");
+    await ensureLibraries("camera");
     if (!window.tmImage) throw new Error("The image model library did not load.");
 
     await validateModelFile(`${imageURL}model.json`);
