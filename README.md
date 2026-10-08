@@ -10,6 +10,10 @@ LUMINA is a static browser experiment that connects locally hosted Teachable Mac
 
 **[Open LUMINA on the web](https://lumina.antideploy.com)**
 
+**[Try the experiment](https://lumina.antideploy.com)** · **[Read the privacy notes](https://lumina.antideploy.com/privacy.html)** · **[Report a reproducible problem](https://github.com/DwijKansagara/LUMINA-AI/issues/new/choose)**
+
+[![Security checks](https://github.com/DwijKansagara/LUMINA-AI/actions/workflows/security.yml/badge.svg)](https://github.com/DwijKansagara/LUMINA-AI/actions/workflows/security.yml)
+
 ## What it does
 
 - Loads the image and speech model files stored in `models/`.
@@ -53,4 +57,8 @@ The site also includes an aggregate view counter and 20-step appreciation meter.
 - The bundled model assets are prototypes and have not been independently evaluated for accuracy or bias.
 
 Built by [Dwij Kansagara](https://github.com/DwijKansagara).
+
+## Feedback and contributions
+
+Useful reports include the browser, device, selected mode, permission state and exact reproduction steps. Do not attach private recordings or identifiable camera frames. Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. If LUMINA is useful for learning browser ML, a GitHub star helps others discover it.
 
