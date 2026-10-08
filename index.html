@@ -4,14 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="LUMINA is a browser experiment for camera gesture and voice-command models." />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://dwij-signal.vercel.app; script-src 'self' https://cdn.jsdelivr.net; style-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; worker-src 'self' blob:; font-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'; frame-ancestors 'none'" />
   <title>LUMINA | Camera and voice interaction prototype</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.4/dist/teachablemachine-image.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands@0.4.0/dist/speech-commands.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js" integrity="sha384-vE8hbVJ4lezako5rlvE7bY0BVzWlFhZncPlckrqNwcUQpVtgbENTgZ8TBbnPjZre" crossorigin="anonymous" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.4/dist/teachablemachine-image.min.js" integrity="sha384-kRSkpNZJhR+RG8g92VsoImxaXc6r8pfCqvp59dzQ0Q1l1VqQNL8Os5wOZR5Actkg" crossorigin="anonymous" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands@0.4.0/dist/speech-commands.min.js" integrity="sha384-Jp/s8pUqQeLKRidZfPMGpDwBh5xo2KyWRuzhc4FZnJ5m/gaFGthnU7uw2HwXWXhK" crossorigin="anonymous" defer></script>
   <script src="script.js" defer></script>
-  <script src="https://dwij-portfolio.antideploy.com/engagement-widget.js?v=20260929-4" defer></script>
+  <script src="https://dwij-signal.vercel.app/engagement-widget.js?v=20261008-1" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to main content</a>

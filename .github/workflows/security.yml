@@ -1,0 +1,13 @@
+name: Security
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  static-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject source maps
+        run: test -z "$(find . -type f -name '*.map' -print -quit)"
+      - name: Scan committed files for credential signatures
+        run: '! git grep -IEn "(BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|ghp_[A-Za-z0-9]{36}|sk-or-v1-[A-Za-z0-9_-]{20,})"'
